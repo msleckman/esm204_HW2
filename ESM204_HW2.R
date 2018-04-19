@@ -18,31 +18,38 @@ library(reconPlots)
 library(tidyverse)
 library(scales)
 
-curve1 <- function(q) 70 - 14*q
+low_demand <- function(q) 70 - 14*q
 MC <- function(q) 3.5*q
-curve3 <- function(q) 100 - 6.5*q
-curve4 <- function(q) b - m*q
+high_demand <- function(q) 100 - 6.5*q
+aggregated <- function(q) b - m*q
+MSC <- function(q) 3.5*q + 2
 
 x_range1 <- 0:5
 x_range2 <- 0:20
 
-curve_intersection <- curve_intersect(curve1, MC, empirical = FALSE, 
+curve_low <- curve_intersect(low_demand, MC, empirical = FALSE, 
                                       domain = c(min(x_range1), max(x_range1)))
-curve_intersection2 <- curve_intersect(curve3, MC, empirical = FALSE,
+curve_high <- curve_intersect(high_demand, MC, empirical = FALSE,
                                        domain = c(min(x_range2), max(x_range2)))
-curve_intersection3 <- curve_intersect(curve4, MC, empirical = FALSE,
+curve_ag <- curve_intersect(aggregated, MC, empirical = FALSE,
                                        domain = c(min(x_range2), max(x_range2)))
+MSC_curve <- curve_intersect(aggregated, MSC, empirical = FALSE,
+                             domain = c(min(x_range2), max(x_range2)))
+
 ggplot() +
-  stat_function(aes(x_range1), color = "red", size = 1, fun = curve1) +
+  stat_function(aes(x_range1), color = "red", size = 1, fun = low_demand) +
   stat_function(aes(x_range2), color = "blue", size = 1, fun = MC) +
-  stat_function(aes(x_range2), color = "red", size = 1, fun = curve3) +
-  stat_function(aes(x_range2), color = "green", size = 1, fun = curve4) +
-  geom_vline(xintercept = curve_intersection$x, linetype = "dotted") +
-  geom_hline(yintercept = curve_intersection$y, linetype = "dotted") +
-  geom_vline(xintercept = curve_intersection2$x, linetype = "dotted") +
-  geom_hline(yintercept = curve_intersection2$y, linetype = "dotted") +
-  geom_vline(xintercept = curve_intersection3$x, linetype = "dotted") +
-  geom_hline(yintercept = curve_intersection3$y, linetype = "dotted") +
+  stat_function(aes(x_range2), color = "red", size = 1, fun = high_demand) +
+  stat_function(aes(x_range2), color = "green", size = 1, fun = aggregated) +
+  stat_function(aes(x_range2), color = "blue", size = 1, fun = MSC) +
+  geom_vline(xintercept = curve_low$x, linetype = "dotted") +
+  geom_hline(yintercept = curve_low$y, linetype = "dotted") +
+  geom_vline(xintercept = curve_high$x, linetype = "dotted") +
+  geom_hline(yintercept = curve_high$y, linetype = "dotted") +
+  geom_vline(xintercept = curve_ag$x, linetype = "dotted") +
+  geom_hline(yintercept = curve_ag$y, linetype = "dotted") +
+  geom_vline(xintercept = MSC_curve$x, linetype = "dotted") +
+  geom_hline(yintercept = MSC_curve$y, linetype = "dotted") +
   theme_classic() +
   xlab("Gas (billion gallons)") +
   ylab("Price per unit of Gas") +
@@ -54,8 +61,19 @@ ggplot() +
 
 
 ## Calculate consumer surplus + producer surplus
-areabox = (curve_intersection3$x * curve_intersection3$y)
+areabox = (curve_ag$x * curve_ag$y)
 
-CS = integrate(curve4, lower = 0, upper = curve_intersection3$x)$value - areabox
+CS = integrate(aggregated, lower = 0, upper = curve_ag$x)$value - areabox
 
-PS = areabox - integrate(curve2, lower = 0, upper = curve_intersection3$x)$value
+PS = areabox - integrate(MC, lower = 0, upper = curve_ag$x)$value
+
+## Calculate the environmental cost 
+deadweight = 0.5 * 2 * (curve_ag$x - MSC_curve$x)
+
+## Calculate the consumer benefit divided between 'High' and 'Low' income
+area_low = curve_low$x * curve_low$y
+area_high = curve_high$x * curve_high$y
+
+CS_low = integrate(low_demand, lower = 0, upper = curve_low$x)$value - area_low
+CS_high = integrate(high_demand, lower = 0, upper = curve_high$x)$value - area_high
+
