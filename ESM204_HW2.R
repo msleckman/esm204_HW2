@@ -17,10 +17,12 @@ library(devtools)
 library(reconPlots)
 library(tidyverse)
 library(scales)
+install.packages("GoFKernel")
+library(GoFKernel)
 
-low_demand <- function(q) ifelse(q >= 0, 70 - 14*q, 0)
-MC <- function(q) 3.5*q
-high_demand <- function(q) ifelse(q >= 0, 100 - 6.5*q, 0)
+low_demand <- function(q) ifelse(q >= 0, 70 - 16.625*q, 0)
+MC <- function(q) 0.25*q
+high_demand <- function(q) ifelse(q >= 0, 100 - 9.65*q, 0)
 low_demand_price<-function(p) {
   ifelse(p>70, 0, ((-70+p)/-14))
 }
@@ -32,8 +34,14 @@ high_demand_price<-function(p){
 
 #aggregated <- function(q) b - m*q
 MSC <- function(q) 3.5*q + 2
-aggregated1 <-function(p) low_demand_price(p)+high_demand_price(p)
-aggregated <-function(q) low_demand(q)+high_demand(q)
+aggregated1 <- function(p) low_demand_price(p) + high_demand_price(p)
+low_inv <- inverse(low_demand, 0, 100)
+high_inv <- inverse(high_demand, 0, 100)
+aggregated <- function(p) low_inv(p) + high_inv(p)
+
+
+aggregate_inv <- inverse(aggregated, 0, 100)
+aggregate_fn <- function(q) aggregate_inv(q)
 
 
 ###
@@ -54,15 +62,15 @@ curve_low <- curve_intersect(low_demand, MC, empirical = FALSE,
                                       domain = c(min(x_range1), max(x_range1)))
 curve_high <- curve_intersect(high_demand, MC, empirical = FALSE,
                                        domain = c(min(x_range2), max(x_range2)))
-curve_ag <- curve_intersect(aggregated, MC, empirical = FALSE,
+curve_ag <- curve_intersect(aggregate_inv, MC, empirical = FALSE,
                                        domain = c(min(x_range2), max(x_range2)))
-MSC_curve <- curve_intersect(aggregated, MSC, empirical = FALSE,
+MSC_curve <- curve_intersect(aggregate_inv, MSC, empirical = FALSE,
                              domain = c(min(x_range2), max(x_range2)))
 ggplot()+
   stat_function(aes(x_range1), color = "red", size = 1, fun = low_demand) +
   stat_function(aes(x_range2), color = "blue", size = 1, fun = MC) +
   stat_function(aes(x_range2), color = "red", size = 1, fun = high_demand) +
-  stat_function(aes(x_range2), color = "green", size = 1, fun = aggregated) +
+  stat_function(aes(x_range2), color = "green", size = 1, fun = aggregate_inv) +
   stat_function(aes(x_range2), color = "blue", size = 1, fun = MSC)+
   geom_vline(xintercept = curve_low$x, linetype = "dotted") +
   geom_hline(yintercept = curve_low$y, linetype = "dotted") +
