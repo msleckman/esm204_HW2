@@ -18,14 +18,37 @@ library(reconPlots)
 library(tidyverse)
 library(scales)
 
-low_demand <- function(q) 70 - 14*q
+low_demand <- function(q) ifelse(q >= 0, 70 - 14*q, 0)
 MC <- function(q) 3.5*q
-high_demand <- function(q) 100 - 6.5*q
-aggregated <- function(q) b - m*q
+high_demand <- function(q) ifelse(q >= 0, 100 - 6.5*q, 0)
+low_demand_price<-function(p) {
+  ifelse(p>70, 0, ((-70+p)/-14))
+}
+
+high_demand_price<-function(p){
+  ifelse(p>100, 0,((-100+p)/-6.5))
+}
+
+
+#aggregated <- function(q) b - m*q
 MSC <- function(q) 3.5*q + 2
+aggregated1 <-function(p) low_demand_price(p)+high_demand_price(p)
+aggregated <-function(q) low_demand(q)+high_demand(q)
+
+
+###
+
+# low_d_vector<-low_demand(0:20)
+# high_d_vector<-high_demand(0:15)
+# low_high_df<-merge(low_d_vector,low_d_p_vector, high_d_vector,high_d_p_vector)
+# colnames(low_high_df)<-c("low_D_P", "high_D_P")
+# low_d_p_vector<-low_demand_price(100:0)
+# high_d_p_vector<-high_demand_price(100:0)
+# high_d_p_vector
 
 x_range1 <- 0:5
 x_range2 <- 0:20
+x_range3<-0:50
 
 curve_low <- curve_intersect(low_demand, MC, empirical = FALSE, 
                                       domain = c(min(x_range1), max(x_range1)))
@@ -35,13 +58,12 @@ curve_ag <- curve_intersect(aggregated, MC, empirical = FALSE,
                                        domain = c(min(x_range2), max(x_range2)))
 MSC_curve <- curve_intersect(aggregated, MSC, empirical = FALSE,
                              domain = c(min(x_range2), max(x_range2)))
-
-ggplot() +
+ggplot()+
   stat_function(aes(x_range1), color = "red", size = 1, fun = low_demand) +
   stat_function(aes(x_range2), color = "blue", size = 1, fun = MC) +
   stat_function(aes(x_range2), color = "red", size = 1, fun = high_demand) +
   stat_function(aes(x_range2), color = "green", size = 1, fun = aggregated) +
-  stat_function(aes(x_range2), color = "blue", size = 1, fun = MSC) +
+  stat_function(aes(x_range2), color = "blue", size = 1, fun = MSC)+
   geom_vline(xintercept = curve_low$x, linetype = "dotted") +
   geom_hline(yintercept = curve_low$y, linetype = "dotted") +
   geom_vline(xintercept = curve_high$x, linetype = "dotted") +
@@ -53,12 +75,11 @@ ggplot() +
   theme_classic() +
   xlab("Gas (billion gallons)") +
   ylab("Price per unit of Gas") +
-  ylim(0,100) +
-  #scale_x_continuous(label=comma, expand=c(0,0), breaks=c(0,curve_intersection$x,1000)) +
+  ylim(0,100)+
+  #scale_x_continuous(label=comma, expand=c(0,0), breaks=c(0,curve_intersection$x,1000))+
   #scale_y_continuous(label=comma, breaks=c(curve_intersection$y,500), expand=c(0,0)) +
   theme(legend.title=element_blank()) +
   ggtitle("Aggregate demand for Gas for High and Low income consumers")
-
 
 ## Calculate consumer surplus + producer surplus
 areabox = (curve_ag$x * curve_ag$y)
