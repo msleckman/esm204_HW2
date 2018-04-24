@@ -213,10 +213,61 @@ for (i in 1:length(tax_seq)) {
 }
 
 
+## 5. Finally, assume that electric cars will gain popularity and that in the future this will lower the demand curves of all income groups by half (vertically).  Under these new demand curves, what are the effects on: 
 
 
+low_demandEV <- function(q) ifelse(q >= 0, 0.5*(70 - 16.625*q), 0)
+high_demandEV <- function(q) ifelse(q >= 0, 0.5*(100 - 9.65*q), 0)
 
+curve_lowEV <- curve_intersect(low_demandEV, MC, empirical = FALSE, 
+                             domain = c(min(x_range1), max(x_range1)))
+curve_highEV <- curve_intersect(high_demandEV, MC, empirical = FALSE,
+                              domain = c(min(x_range2), max(x_range2)))
+## Find aggregate
+aggregateEV <- function(q) ifelse(q < 3.10880829, 0.5*(100 - 9.65*q), -3.052926*q + 44.49097) # + b
 
+curve_agEV <- curve_intersect(aggregateEV, MC, empirical = FALSE,
+                                domain = c(min(x_range2), max(x_range2)))
 
+ggplot()+
+  stat_function(aes(x_range1), color = "red", size = 1, fun = low_demandEV) +
+  stat_function(aes(x_range2), color = "blue", size = 1, fun = MC) +
+  stat_function(aes(x_range2), color = "red", size = 1, fun = high_demandEV) +
+  stat_function(aes(x_range2), color = "green", size = 1, fun = aggregateEV) +
+  stat_function(aes(x_range2), color = "blue", size = 1, fun = MSC)+
+  geom_vline(xintercept = curve_lowEV$x, linetype = "dotted") +
+  geom_hline(yintercept = curve_lowEV$y, linetype = "dotted") +
+  geom_vline(xintercept = curve_highEV$x, linetype = "dotted") +
+  geom_hline(yintercept = curve_highEV$y, linetype = "dotted") +
+  geom_vline(xintercept = curve_agEV$x, linetype = "dotted") +
+  geom_hline(yintercept = curve_agEV$y, linetype = "dotted") +
+  geom_vline(xintercept = MSC_curve$x, linetype = "dotted") +
+  geom_hline(yintercept = MSC_curve$y, linetype = "dotted") +
+  theme_classic() +
+  xlab("Gas (billion gallons)") +
+  ylab("Price per unit of Gas") +
+  ylim(0,100)+
+  #scale_x_continuous(label=comma, expand=c(0,0), breaks=c(0,curve_intersection$x,1000))+
+  #scale_y_continuous(label=comma, breaks=c(curve_intersection$y,500), expand=c(0,0)) +
+  theme(legend.title=element_blank()) +
+  ggtitle("Aggregate Demand for Gas for High and Low Income Consumers")
 
+area_lowEV = curve_lowEV$x * curve_lowEV$y
+area_highEV = curve_highEV$x * curve_highEV$y
+
+CS_lowEV = integrate(low_demandEV, lower = 0, upper = curve_lowEV$x)$value - area_lowEV
+CS_highEV = integrate(high_demandEV, lower = 0, upper = curve_highEV$x)$value - area_highEV
+CS_lowEV
+CS_highEV
+
+# a. Gas consumption by “High” income consumers 
+curve_highEV$x
+## vs...
+curve_high$x
+# b. Gas consumption by “Low” income consumers 
+curve_lowEV$x
+## vs...
+curve_low$x
+# c. Gas price 
+# d. Environmental damage from gasoline 
 
