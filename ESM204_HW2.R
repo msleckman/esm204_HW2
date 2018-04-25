@@ -57,11 +57,11 @@ x_range2 <- 0:15
 x_range3 <-0:50
 
 curve_low <- curve_intersect(low_demand, OG_Price, empirical = FALSE, 
-                                      domain = c(min(x_range1), max(x_range1)))
+                             domain = c(min(x_range1), max(x_range1)))
 curve_high <- curve_intersect(high_demand, OG_Price(), empirical = FALSE,
-                                       domain = c(min(x_range2), max(x_range2)))
+                              domain = c(min(x_range2), max(x_range2)))
 curve_ag <- curve_intersect(aggregate, MC, empirical = FALSE,
-                                       domain = c(min(x_range2), max(x_range2)))
+                            domain = c(min(x_range2), max(x_range2)))
 MSC_curve <- curve_intersect(aggregate, MSC, empirical = FALSE,
                              domain = c(min(x_range2), max(x_range2)))
 ggplot()+
@@ -112,7 +112,7 @@ CS_high
 # 3. A gas tax of $0.50/gal. is proposed. What would be the effects of this tax on: 
 tax <- function(q) 0.25*q + 0.5
 curve_tax <- curve_intersect(aggregate, tax, empirical = FALSE,
-                            domain = c(min(x_range2), max(x_range2)))
+                             domain = c(min(x_range2), max(x_range2)))
 curve_tax_low<-curve_intersect(low_demand, tax, empirical=FALSE, domain=c(min(x_range2), max(x_range2)))
 ## Check the decrease in consumer surplus
 CS_withtax <- integrate(aggregate, lower = 0, upper = curve_tax$x)$value -
@@ -184,14 +184,14 @@ for (i in 1:length(tax_seq)) {
   
   ## Step 3. Calculate high income CS and append to list
   new_tax_high <- curve_intersect(high_demand, y_value, empirical = FALSE,
-                              domain = c(min(x_range2), max(x_range2)))
+                                  domain = c(min(x_range2), max(x_range2)))
   highCS <- integrate(high_demand, lower = 0, upper = new_tax_high$x)$value - 
     (new_tax_high$x * new_tax_high$y)
   highCS_values[i] <- highCS
   
   ## Step 4. Calculate low income CS and append to list
   new_tax_low <- curve_intersect(low_demand, y_value, empirical = FALSE,
-                             domain = c(min(x_range2), max(x_range2)))
+                                 domain = c(min(x_range2), max(x_range2)))
   lowCS <- integrate(low_demand, lower = 0, upper = new_tax_low$x)$value -
     (new_tax_low$x * new_tax_low$y)
   lowCS_values[i] <- lowCS
@@ -216,6 +216,17 @@ for (i in 1:length(tax_seq)) {
   
   ## Step 9. Calculate NB low = CSlow + TaxRevlow - TEC
   NBlow[i] = lowCS + TRlow - TEC
+  
+  ## Two dollar values
+  if (tax_seq[i] == 2.0) {
+    Twodollar = cbind('Scenario' = '$2 Gas Tax',
+                      'High income gas consumption' = new_tax_high$x,
+                      'Low income gas consumption' = new_tax_low$x,
+                      'High income Consumer surplus' = highCS,
+                      'Low income Consumer surplus' = lowCS,
+                      'Aggregate gas price' = get_y$y,
+                      'Environmental Damage from Gas' = TEC)
+  }
 }
 
 tax_values <- cbind(tax_seq, TaxRevHigh, TaxRevLow, NBhigh, NBlow, 
@@ -228,14 +239,27 @@ low_demandEV <- function(q) ifelse(q >= 0, 0.5*(70 - 16.625*q), 0)
 high_demandEV <- function(q) ifelse(q >= 0, 0.5*(100 - 9.65*q), 0)
 
 curve_lowEV <- curve_intersect(low_demandEV, MC, empirical = FALSE, 
-                             domain = c(min(x_range1), max(x_range1)))
+                               domain = c(min(x_range1), max(x_range1)))
 curve_highEV <- curve_intersect(high_demandEV, MC, empirical = FALSE,
-                              domain = c(min(x_range2), max(x_range2)))
+                                domain = c(min(x_range2), max(x_range2)))
 ## Find aggregate
 aggregateEV <- function(q) ifelse(q < 3.10880829, 0.5*(100 - 9.65*q), -3.052926*q + 44.49097)
 
 curve_agEV <- curve_intersect(aggregateEV, MC, empirical = FALSE,
-                                domain = c(min(x_range2), max(x_range2)))
+                              domain = c(min(x_range2), max(x_range2)))
+y_EV <- function(q) curve_agEV$y
+
+new_tax_highEV <- curve_intersect(high_demandEV, y_EV, empirical = FALSE,
+                                  domain = c(min(x_range2), max(x_range2)))
+highCS_EV <- integrate(high_demandEV, lower = 0, upper = new_tax_highEV$x)$value - 
+  (new_tax_highEV$x * new_tax_highEV$y)
+
+
+new_tax_lowEV <- curve_intersect(low_demandEV, y_EV, empirical = FALSE,
+                                 domain = c(min(x_range2), max(x_range2)))
+lowCS_EV <- integrate(low_demandEV, lower = 0, upper = new_tax_lowEV$x)$value -
+  (new_tax_lowEV$x * new_tax_lowEV$y)
+
 
 ggplot()+
   stat_function(aes(x_range1), color = "red", size = 1, fun = low_demandEV) +
@@ -285,4 +309,16 @@ curve_ag$y
 # d. Environmental damage from gasoline 
 envdamEV = 2 * curve_agEV$x
 envdamEV
+
+## two dollar comparison vs. electric vehicle
+EVscenario = cbind('Scenario' = 'Electric Vehicle',
+                   'High income gas consumption' = new_tax_highEV$x,
+                   'Low income gas consumption' = new_tax_lowEV$x,
+                   'High income Consumer surplus' = highCS_EV,
+                   'Low income Consumer surplus' = lowCS_EV,
+                   'Aggregate gas price' = curve_agEV$y,
+                   'Environmental Damage from Gas' = envdamEV)
+
+scenarios = rbind(Twodollar, EVscenario)
+
 
