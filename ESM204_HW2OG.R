@@ -19,6 +19,7 @@ library(tidyverse)
 library(scales)
 #install.packages("GoFKernel")
 # library(GoFKernel)
+library(reshape2)
 
 low_demand <- function(q) ifelse(q >= 0, 70 - 16.625*q, 0)
 MC <- function(q) 0.25*q
@@ -172,6 +173,7 @@ NBhigh = numeric(length(tax_seq))
 NBlow = numeric(length(tax_seq))
 TaxRevHigh = numeric(length(tax_seq))
 TaxRevLow = numeric(length(tax_seq))
+TaxRevtotal= numeric(length(tax_seq)) 
 Qconsumedlow = numeric(length(tax_seq))
 Qconsumedhigh = numeric(length(tax_seq))
 
@@ -210,6 +212,7 @@ for (i in 1:length(tax_seq)) {
   TRhigh = new_tax_high$x * tax_seq[i]
   TaxRevHigh[i] = TRhigh
   TaxRevLow[i] = TRlow
+  TaxRevtotal[i]= TRlow+TRhigh
   
   ## Step 7. Calculate total environmental cost
   TEC = 2 * get_y$x
@@ -233,9 +236,14 @@ for (i in 1:length(tax_seq)) {
   }
 }
 
-tax_values <- cbind(tax_seq, TaxRevHigh, TaxRevLow, NBhigh, NBlow, 
+tax_values <- cbind(tax_seq, TaxRevHigh, TaxRevLow,TaxRevtotal, NBhigh, NBlow, 
                     PS_values, lowCS_values, highCS_values, Qconsumedhigh, 
                     Qconsumedlow, TEC_values)
+##Rounded
+tax_values<-as.data.frame((tax_values))
+tax_values<-round(tax_values2, 2)
+class(tax_values)
+View(tax_values)
 
 ## 5. Finally, assume that electric cars will gain popularity and that in the future this will lower the demand curves of all income groups by half (vertically).  Under these new demand curves, what are the effects on: 
 
