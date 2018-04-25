@@ -25,7 +25,6 @@ MC <- function(q) 0.25*q
 high_demand <- function(q) ifelse(q >= 0, 100 - 9.65*q, 0)
 aggregate <- function(q) ifelse(q < 3.108808, 100 - 9.65*q, 88.98194 - 6.105853*q)
 MSC <- function(q) 0.25*q + 2
-OG_Price <- function(q) 3.5
 
 # aggregated1 <- function(p) low_demand_price(p) + high_demand_price(p)
 # low_inv <- inverse(low_demand, 0, 100)
@@ -56,9 +55,9 @@ x_range1 <- 0:5
 x_range2 <- 0:15
 x_range3 <-0:50
 
-curve_low <- curve_intersect(low_demand, OG_Price, empirical = FALSE, 
+curve_low <- curve_intersect(low_demand, MC, empirical = FALSE, 
                                       domain = c(min(x_range1), max(x_range1)))
-curve_high <- curve_intersect(high_demand, OG_Price(), empirical = FALSE,
+curve_high <- curve_intersect(high_demand, MC, empirical = FALSE,
                                        domain = c(min(x_range2), max(x_range2)))
 curve_ag <- curve_intersect(aggregate, MC, empirical = FALSE,
                                        domain = c(min(x_range2), max(x_range2)))
@@ -87,7 +86,7 @@ ggplot()+
   theme(legend.title=element_blank()) +
   ggtitle("Aggregate Demand for Gas for High and Low Income Consumers")
 
-##### Part 1. Calculate consumer surplus + producer surplus
+## Part 1. Calculate consumer surplus + producer surplus
 areabox = (curve_ag$x * curve_ag$y)
 
 CS = integrate(aggregate, lower = 0, upper = curve_ag$x)$value - areabox
@@ -113,7 +112,7 @@ CS_high
 tax <- function(q) 0.25*q + 0.5
 curve_tax <- curve_intersect(aggregate, tax, empirical = FALSE,
                             domain = c(min(x_range2), max(x_range2)))
-curve_tax_low<-curve_intersect(low_demand, tax, empirical=FALSE, domain=c(min(x_range2), max(x_range2)))
+
 ## Check the decrease in consumer surplus
 CS_withtax <- integrate(aggregate, lower = 0, upper = curve_tax$x)$value -
   (curve_tax$x * curve_tax$y)
@@ -156,14 +155,14 @@ new_trapezoid
 totalrev = 0.5 * curve_tax$x
 totalrev
 
-#####  4. Now, assume that all revenue from a tax will be used for infrastructure repairs, and that the benefit of this is proportional to the amount you drive.  Also assume that “Low” income consumers bear all environmental costs. For a range of gas taxes (ranging from $0 - $5.00/gal), calculate the effects of the tax on: 
+##  4. Now, assume that all revenue from a tax will be used for infrastructure repairs, and that the benefit of this is proportional to the amount you drive.  Also assume that “Low” income consumers bear all environmental costs. For a range of gas taxes (ranging from $0 - $5.00/gal), calculate the effects of the tax on: 
 # a. "High" income consumers
 # b. “Low” income consumers 
 # c. Gas producers 
 
 tax_seq <- seq(0, 5, 0.5)
 
-##### Assign all arrays
+## Assign all arrays
 lowCS_values = numeric(length(tax_seq))
 highCS_values = numeric(length(tax_seq))
 PS_values = numeric(length(tax_seq))
@@ -172,6 +171,8 @@ NBhigh = numeric(length(tax_seq))
 NBlow = numeric(length(tax_seq))
 TaxRevHigh = numeric(length(tax_seq))
 TaxRevLow = numeric(length(tax_seq))
+Qconsumedlow = numeric(length(tax_seq))
+Qconsumedhigh = numeric(length(tax_seq))
 
 
 for (i in 1:length(tax_seq)) {
@@ -188,6 +189,7 @@ for (i in 1:length(tax_seq)) {
   highCS <- integrate(high_demand, lower = 0, upper = new_tax_high$x)$value - 
     (new_tax_high$x * new_tax_high$y)
   highCS_values[i] <- highCS
+  Qconsumedhigh[i] <- new_tax_high$x
   
   ## Step 4. Calculate low income CS and append to list
   new_tax_low <- curve_intersect(low_demand, y_value, empirical = FALSE,
@@ -195,6 +197,7 @@ for (i in 1:length(tax_seq)) {
   lowCS <- integrate(low_demand, lower = 0, upper = new_tax_low$x)$value -
     (new_tax_low$x * new_tax_low$y)
   lowCS_values[i] <- lowCS
+  Qconsumedlow[i] <- new_tax_low$x
   
   ## Step 5. Calculate PS and append to list
   PSvalue <- (get_y$x * get_y$y) - 
@@ -230,7 +233,7 @@ for (i in 1:length(tax_seq)) {
 }
 
 tax_values <- cbind(tax_seq, TaxRevHigh, TaxRevLow, NBhigh, NBlow, 
-                    PS_values, lowCS_values, highCS_values, TEC_values)
+                    PS_values, lowCS_values, highCS_values, Qconsumedhigh, Qconsumedlow, TEC_values)
 
 ## 5. Finally, assume that electric cars will gain popularity and that in the future this will lower the demand curves of all income groups by half (vertically).  Under these new demand curves, what are the effects on: 
 
