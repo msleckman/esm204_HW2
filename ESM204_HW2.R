@@ -233,7 +233,8 @@ for (i in 1:length(tax_seq)) {
 }
 
 tax_values <- cbind(tax_seq, TaxRevHigh, TaxRevLow, NBhigh, NBlow, 
-                    PS_values, lowCS_values, highCS_values, Qconsumedhigh, Qconsumedlow, TEC_values)
+                    PS_values, lowCS_values, highCS_values, Qconsumedhigh, 
+                    Qconsumedlow, TEC_values)
 
 ## 5. Finally, assume that electric cars will gain popularity and that in the future this will lower the demand curves of all income groups by half (vertically).  Under these new demand curves, what are the effects on: 
 
