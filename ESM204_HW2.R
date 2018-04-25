@@ -166,9 +166,11 @@ tax_seq <- seq(0, 5, 0.5)
 lowCS_values = numeric(length(tax_seq))
 highCS_values = numeric(length(tax_seq))
 PS_values = numeric(length(tax_seq))
-
+TEC_values = numeric(length(tax_seq))
 NBhigh = numeric(length(tax_seq))
 NBlow = numeric(length(tax_seq))
+TaxRevHigh = numeric(length(tax_seq))
+TaxRevLow = numeric(length(tax_seq))
 
 
 for (i in 1:length(tax_seq)) {
@@ -201,9 +203,12 @@ for (i in 1:length(tax_seq)) {
   ## Step 6. Calculate tax revenue for high and low income consumers (Qlow/totalQ)
   TRlow = new_tax_low$x * tax_seq[i]
   TRhigh = new_tax_high$x * tax_seq[i]
+  TaxRevHigh[i] = TRhigh
+  TaxRevLow[i] = TRlow
   
   ## Step 7. Calculate total environmental cost
   TEC = 2 * get_y$x
+  TEC_values[i] = TEC
   
   ## Step 8. Calculate NB high = CShigh + TaxRevhigh
   NBhigh[i] = highCS + TRhigh
@@ -212,6 +217,8 @@ for (i in 1:length(tax_seq)) {
   NBlow[i] = lowCS + TRlow - TEC
 }
 
+tax_values <- cbind(tax_seq, TaxRevHigh, TaxRevLow, NBhigh, NBlow, 
+                    PS_values, lowCS_values, highCS_values, TEC_values)
 
 ## 5. Finally, assume that electric cars will gain popularity and that in the future this will lower the demand curves of all income groups by half (vertically).  Under these new demand curves, what are the effects on: 
 
@@ -224,7 +231,7 @@ curve_lowEV <- curve_intersect(low_demandEV, MC, empirical = FALSE,
 curve_highEV <- curve_intersect(high_demandEV, MC, empirical = FALSE,
                               domain = c(min(x_range2), max(x_range2)))
 ## Find aggregate
-aggregateEV <- function(q) ifelse(q < 3.10880829, 0.5*(100 - 9.65*q), -3.052926*q + 44.49097) # + b
+aggregateEV <- function(q) ifelse(q < 3.10880829, 0.5*(100 - 9.65*q), -3.052926*q + 44.49097)
 
 curve_agEV <- curve_intersect(aggregateEV, MC, empirical = FALSE,
                                 domain = c(min(x_range2), max(x_range2)))
@@ -234,15 +241,12 @@ ggplot()+
   stat_function(aes(x_range2), color = "blue", size = 1, fun = MC) +
   stat_function(aes(x_range2), color = "red", size = 1, fun = high_demandEV) +
   stat_function(aes(x_range2), color = "green", size = 1, fun = aggregateEV) +
-  stat_function(aes(x_range2), color = "blue", size = 1, fun = MSC)+
   geom_vline(xintercept = curve_lowEV$x, linetype = "dotted") +
   geom_hline(yintercept = curve_lowEV$y, linetype = "dotted") +
   geom_vline(xintercept = curve_highEV$x, linetype = "dotted") +
   geom_hline(yintercept = curve_highEV$y, linetype = "dotted") +
   geom_vline(xintercept = curve_agEV$x, linetype = "dotted") +
   geom_hline(yintercept = curve_agEV$y, linetype = "dotted") +
-  geom_vline(xintercept = MSC_curve$x, linetype = "dotted") +
-  geom_hline(yintercept = MSC_curve$y, linetype = "dotted") +
   theme_classic() +
   xlab("Gas (billion gallons)") +
   ylab("Price per unit of Gas") +
@@ -269,5 +273,15 @@ curve_lowEV$x
 ## vs...
 curve_low$x
 # c. Gas price 
+# Cumulative gas consumption
+curve_agEV$x
+curve_ag$x
+
+# Gas price comparison
+curve_agEV$y
+curve_ag$y
+
 # d. Environmental damage from gasoline 
+envdamEV = 2 * curve_agEV$x
+envdamEV
 
