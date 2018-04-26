@@ -292,7 +292,7 @@ ggplot()+
   #scale_x_continuous(label=comma, expand=c(0,0), breaks=c(0,curve_intersection$x,1000))+
   #scale_y_continuous(label=comma, breaks=c(curve_intersection$y,500), expand=c(0,0)) +
   theme(legend.title=element_blank()) +
-  ggtitle("Aggregate Demand for Gas for High and Low Income Consumers")
+  ggtitle("Aggregate Demand for Gas for High and Low Income Consumers\n Under the Electric Vehicle Scenario")
 
 area_lowEV = curve_lowEV$x * curve_lowEV$y
 area_highEV = curve_highEV$x * curve_highEV$y
@@ -333,3 +333,46 @@ EVscenario = cbind('Scenario' = 'Electric Vehicle',
                    'Environmental Damage from Gas' = envdamEV)
 
 scenarios = rbind(Twodollar, EVscenario)
+
+
+
+## Making Graphs
+## Net Benefits graph
+tax_values <- as.data.frame(tax_values)
+incomes <- c(rep('High', 11), rep('Low', 11))
+nBenefits <- c(tax_values$NBhigh, tax_values$NBlow)
+nBenefits <- round(nBenefits, digits = 2)
+taxseqs <- c(rep(tax_values$tax_seq, 2))
+ggnb <- cbind(incomes, nBenefits, taxseqs)
+ggnb <- as.data.frame(ggnb, round = 2)
+
+ggplot(ggnb, aes(taxseqs, nBenefits, group = factor(incomes))) +
+  geom_point(aes(colour = factor(incomes))) +
+  geom_line(aes(colour = factor(incomes))) +
+  labs(
+    x = "Tax Values",
+    y = "Net Benefits ($/gal)",
+    title = "Net Benefits to High and Low Income Gas Consumers",
+    colour = "Income") +
+  scale_y_discrete() +
+  #scale_colour_discrete(breaks=c("$15 Million", "$10 Million", "$7.5 Million", "$5 Million")) +
+  theme_bw()
+
+## Consumer Surplus graph
+
+CSs <- round(c(tax_values$highCS_values, tax_values$lowCS_values), digits = 2)
+ggcs <- as.data.frame(cbind(incomes, CSs, taxseqs))
+
+ggplot(ggcs, aes(taxseqs, CSs, group = factor(incomes))) +
+  geom_point(aes(colour = factor(incomes))) +
+  geom_line(aes(colour = factor(incomes))) +
+  labs(
+    x = "Tax Values",
+    y = "Consumer Surplus ($/gal)",
+    title = "Consumer Surplus to High and Low Income Gas Consumers",
+    colour = "Income") +
+  scale_y_discrete() +
+  #scale_colour_discrete(breaks=c("$15 Million", "$10 Million", "$7.5 Million", "$5 Million")) +
+  theme_bw()
+
+
